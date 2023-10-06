@@ -1,0 +1,29 @@
+<ARXConfiguration xmlns="http://datawolf.org/arx/Configuration">
+    <PrivacyModels>
+    <PrivacyModel name="KAnonymity">
+        <Parameter name="k" value="5" />
+    </PrivacyModel>
+
+</PrivacyModels>
+
+    <DataDefinitions>
+        <!-- Здесь описываются атрибуты и их свойства -->
+        <Attribute fieldName="Номер карты" type="str"/>
+        <Attribute fieldName="Координаты и время" type="str"/>
+    </DataDefinitions>
+    <Anonymization>
+        <Transformation>
+
+             <MaskingMethod>
+                <MaskingLength>16</MaskingLength>
+             </MaskingMethod>
+
+          </Transformation>
+         <Transformation>
+             <PerturbationMethod>
+                <PerturbationAlgorithm>laplace</PerturbationAlgorithm>
+                <PerturbationParameter>0.5</PerturbationParameter>
+             </PerturbationMethod>
+          </Transformation>
+    </Anonymization>
+</ARXConfiguration>
