@@ -1,57 +1,12 @@
 import pandas as pd
 import random
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLabel, QComboBox
+from PyQt5.QtWidgets import QListWidget, QListWidgetItem
 
 
-"""class AnonymizationApp(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
-        layout = QVBoxLayout()
-
-        self.actionLabel = QLabel('Выберите действие:')
-        self.actionComboBox = QComboBox()
-        self.actionComboBox.addItem('Обезличить датасет')
-        self.actionComboBox.addItem('Вычислить k-анонимность')
-
-        self.qiLabel = QLabel('Введите Квази-идентификаторы (через запятую):')
-        self.qiInput = QLineEdit()
-
-        self.executeButton = QPushButton('Выполнить')
-        self.executeButton.clicked.connect(self.executeAction)
-
-        layout.addWidget(self.actionLabel)
-        layout.addWidget(self.actionComboBox)
-        layout.addWidget(self.qiLabel)
-        layout.addWidget(self.qiInput)
-        layout.addWidget(self.executeButton)
-
-        self.setLayout(layout)
-        self.setWindowTitle('Anonymization App')
-        self.show()
-
-    def executeAction(self):
-        action = self.actionComboBox.currentText()
-        qi_identifiers = self.qiInput.text().split(',')
-
-        if action == 'Обезличить датасет':
-            # Выполнить обезличивание
-            pass
-        elif action == 'Вычислить k-анонимность':
-            # Выполнить вычисление k-анонимности с использованием qi_identifiers
-            pass
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = AnonymizationApp()
-    sys.exit(app.exec_())"""
-
-# Чтение данных из файлов
 st = [line.strip() for line in open('C:/Users/snw12/Desktop/brands.txt', 'r', encoding="utf8")]
 shop_list = [line.strip() for line in open('C:/Users/snw12/Desktop/brands.txt', 'r', encoding="utf8")]
 topic_list = [line.strip() for line in open('C:/Users/snw12/Desktop/topics.txt', 'r', encoding="utf8")]
@@ -60,30 +15,33 @@ excel_data_df = pd.read_excel('output.xlsx', sheet_name='Sheet1')
 columns = ['Название магазина', 'Координаты и время', 'Категория', 'Бренд', 'Номер карты', 'Количество товаров', 'Цена']
 
 def mask_mag(data):
+    masked_data = ''
     for i in range(len(shop_list)):
-        if shop_list[i]==data:
-            index=i
-            if index <=9:
-                masked_data='Техники'
-            elif 10<=index<=19:
+        if shop_list[i] == data:
+            index = i
+            if index <= 9:
+                masked_data = 'Техники'
+            elif 10 <= index <= 19:
                 masked_data = 'Косметики и мед.товаров'
-            elif index>19:
-                masked_data ="Одежды"
+            elif index > 19:
+                masked_data = "Одежды"
 
     return masked_data
 
 def mask_shop(data):
+    masked_data = ''
     for i in range(len(topic_list)):
-        if topic_list[i]==data:
-            index=i
-            if index <=14:
-                masked_data='Техника'
-            elif 14<index<=29:
+        if topic_list[i] == data:
+            index = i
+            if index <= 14:
+                masked_data = 'Техника'
+            elif 14 < index <= 29:
                 masked_data = 'Косметика и медицина'
-            elif index>29:
-                masked_data ="Одежда,обувь и аксессуары"
+            elif index > 29:
+                masked_data = "Одежда,обувь и аксессуары"
 
     return masked_data
+
 
 def generate_realistic_price(data):
     price_ranges = {
@@ -144,9 +102,14 @@ def generate_realistic_price(data):
     return price
 
 def mask_data(data):
-    masked_data_1 = "*" * 12
-    pref = str(data)[:4]
-    masked_data = pref + masked_data_1
+    #masked_data_1 = "*" * 12
+    masked_data=''
+    pref = str(data)[:1]
+    if pref =='5':
+        masked_data = 'Mastercard'
+    elif pref == '4':
+        masked_data='Visa'
+    #masked_data = pref + masked_data_1
     return masked_data
 
 def how_much(data):
@@ -185,39 +148,101 @@ def calculate_k_anonymity(df, k):
     group_counts = df.groupby(columns).size().reset_index(name='count')
     return all(group_counts['count'] >= k)
 
-# Преобразование данных
-for i in range(1):
-    excel_data_df['Название магазина'] = excel_data_df['Название магазина'].apply(mask_mag)
-    excel_data_df['Цена'] = excel_data_df['Категория'].apply(generate_realistic_price)
-    excel_data_df['Категория'] = excel_data_df['Категория'].apply(mask_shop)
-    excel_data_df['Номер карты'] = excel_data_df['Номер карты'].apply(mask_data)
-    excel_data_df['Координаты и время'] = excel_data_df['Координаты и время'].apply(perturb_data)
-    excel_data_df['Количество товаров'] = excel_data_df['Количество товаров'].apply(how_much)
-    excel_data_df['Бренд'] = excel_data_df['Бренд'].apply(del_brand)
+
+class AnonymizationApp(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+
+        self.actionLabel = QLabel('Выберите действие:')
+        self.actionComboBox = QComboBox()
+        self.actionComboBox.addItem('Обезличить датасет')
+        self.actionComboBox.addItem('Вычислить k-анонимность')
+
+        columns = ['Название магазина', 'Координаты и время', 'Категория', 'Бренд', 'Номер карты', 'Количество товаров',
+                   'Цена']
+        self.qiLabel = QLabel('Выберите квази-идентификаторы:')
+        self.qiListWidget = QListWidget()
+        self.qiListWidget.addItems(columns)
+        self.qiListWidget.setSelectionMode(QListWidget.MultiSelection)
+
+        self.executeButton = QPushButton('Выполнить')
+        self.executeButton.clicked.connect(self.executeAction)
+
+        layout.addWidget(self.actionLabel)
+        layout.addWidget(self.actionComboBox)
+        layout.addWidget(self.qiLabel)
+        layout.addWidget(self.qiListWidget)
+        layout.addWidget(self.executeButton)
+
+        self.setLayout(layout)
+        self.setWindowTitle('Anonymization App')
+        self.show()
+
+    def executeAction(self):
+        action = self.actionComboBox.currentText()
+        qi_identifiers = [item.text() for item in self.qiListWidget.selectedItems()]
+        #excel_data_df = pd.read_excel('output.xlsx', sheet_name='Sheet1')
+
+        if action == 'Обезличить датасет':
+            if 'Название магазина' in qi_identifiers:
+                excel_data_df['Название магазина'] = excel_data_df['Название магазина'].apply(mask_mag)
+            if "Цена" in qi_identifiers:
+                excel_data_df['Цена'] = excel_data_df['Категория'].apply(generate_realistic_price)
+            if "Категория" in qi_identifiers:
+                excel_data_df['Категория'] = excel_data_df['Категория'].apply(mask_shop)
+            if "Номер карты" in qi_identifiers:
+                excel_data_df['Номер карты'] = excel_data_df['Номер карты'].apply(mask_data)
+            if "Координаты и время" in qi_identifiers:
+                excel_data_df['Координаты и время'] = excel_data_df['Координаты и время'].apply(perturb_data)
+            if "Количество товаров" in qi_identifiers:
+                excel_data_df['Количество товаров'] = excel_data_df['Количество товаров'].apply(how_much)
+            if "Бренд" in qi_identifiers:
+                excel_data_df['Бренд'] = excel_data_df['Бренд'].apply(del_brand)
+            excel_data_df.to_excel('output2.xlsx', index=False)
+            excel_data1_df = excel_data_df.copy()
+            pass
+
+        elif action == 'Вычислить k-анонимность':
+            excel_data1_df = pd.read_excel('output2.xlsx', sheet_name='Sheet1')
+            k = 42
+            k_anon = calculate_k_anonymity(excel_data1_df, k)
+            print(f"Датасет {'соответствует' if k_anon else 'не соответствует'} {k}-анонимности.")
+
+            group_counts = excel_data1_df.groupby(columns).size().reset_index(name='count')
+            bad_k_values = group_counts[group_counts['count'] < k].head(5)
+
+            percentage_bad_k = (len(bad_k_values) / len(group_counts)) * 100
+
+            print(f"\nПлохие значения K-анонимности (первые 5):")
+            print(bad_k_values)
+            print(f"\nПроцент 'плохих' значений K-анонимности: {percentage_bad_k:.2f}%")
+
+            unique_rows_count = len(excel_data1_df.groupby(columns))
+
+            print(f"\nКоличество уникальных строк по квази-идентификаторам: {unique_rows_count}")
+            pass
 
 
-excel_data1_df = excel_data_df.copy()  # Make a copy for further calculations
-k = 7
-k_anon = calculate_k_anonymity(excel_data1_df, k)
-print(f"Датасет {'соответствует' if k_anon else 'не соответствует'} {k}-анонимности.")
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = AnonymizationApp()
+    sys.exit(app.exec_())
 
 
-group_counts = excel_data1_df.groupby(columns).size().reset_index(name='count')
-bad_k_values = group_counts[group_counts['count'] < k].head(5)
 
-percentage_bad_k = (len(bad_k_values) / len(group_counts)) * 100
 
-print(f"\nПлохие значения K-анонимности (первые 5):")
-print(bad_k_values)
-print(f"\nПроцент 'плохих' значений K-анонимности: {percentage_bad_k:.2f}%")
 
-unique_rows_count = len(excel_data1_df.groupby(columns))
 
-print(f"\nКоличество уникальных строк по квази-идентификаторам: {unique_rows_count}")
 
-if k == 1:
+
+"""if k == 1:
     unique_rows = excel_data1_df.groupby(columns).size().reset_index()
     print("\nУникальные строки:")
-    print(unique_rows)
+    print(unique_rows)"""
 
 excel_data_df.to_excel('output2.xlsx', index=False)
