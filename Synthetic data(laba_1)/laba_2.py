@@ -144,9 +144,9 @@ def perturb_data(data):
 
     return cord
 
-def calculate_k_anonymity(df, k):
-    group_counts = df.groupby(columns).size().reset_index(name='count')
-    return all(group_counts['count'] >= k)
+def calculate_k_anonymity(df, column):
+    group_counts = df.groupby(column).size().reset_index(name='count')
+    return min(group_counts['count']), max(group_counts['count']), group_counts
 
 
 class AnonymizationApp(QWidget):
@@ -186,7 +186,7 @@ class AnonymizationApp(QWidget):
     def executeAction(self):
         action = self.actionComboBox.currentText()
         qi_identifiers = [item.text() for item in self.qiListWidget.selectedItems()]
-        #excel_data_df = pd.read_excel('output.xlsx', sheet_name='Sheet1')
+        excel_data_df = pd.read_excel('output.xlsx', sheet_name='Sheet1')
 
         if action == 'Обезличить датасет':
             if 'Название магазина' in qi_identifiers:
@@ -204,28 +204,37 @@ class AnonymizationApp(QWidget):
             if "Бренд" in qi_identifiers:
                 excel_data_df['Бренд'] = excel_data_df['Бренд'].apply(del_brand)
             excel_data_df.to_excel('output2.xlsx', index=False)
-            excel_data1_df = excel_data_df.copy()
+            print("done")
+
             pass
 
         elif action == 'Вычислить k-анонимность':
             excel_data1_df = pd.read_excel('output2.xlsx', sheet_name='Sheet1')
-            k = 42
-            k_anon = calculate_k_anonymity(excel_data1_df, k)
-            print(f"Датасет {'соответствует' if k_anon else 'не соответствует'} {k}-анонимности.")
+            k_anon, k_max, df_1 = calculate_k_anonymity(excel_data1_df, qi_identifiers)
+            k=k_anon
+            df_1.to_excel('output3.xlsx', index=False)
+            print(k_anon, k_max)
 
-            group_counts = excel_data1_df.groupby(columns).size().reset_index(name='count')
-            bad_k_values = group_counts[group_counts['count'] < k].head(5)
+            counten = df_1['count'].tolist()
+            sort_counten=sorted(counten)
 
-            percentage_bad_k = (len(bad_k_values) / len(group_counts)) * 100
+            print(f"\nПлохие значения K-анонимности (первые 5):" ,sort_counten[:5])
 
-            print(f"\nПлохие значения K-анонимности (первые 5):")
-            print(bad_k_values)
-            print(f"\nПроцент 'плохих' значений K-анонимности: {percentage_bad_k:.2f}%")
 
-            unique_rows_count = len(excel_data1_df.groupby(columns))
+            #group_counts = excel_data1_df.groupby(qi_identifiers).size().reset_index(name='count')
+            #bad_k_values = group_counts[group_counts['count'] < k].head(5)
+
+
+            #percentage_bad_k = (len(bad_k_values) / len(group_counts)) * 100
+
+            #print(bad_k_values)
+            #print(f"\nПроцент 'плохих' значений K-анонимности: {percentage_bad_k:.2f}%")
+
+            unique_rows_count = len(excel_data1_df.groupby(qi_identifiers))
 
             print(f"\nКоличество уникальных строк по квази-идентификаторам: {unique_rows_count}")
             pass
+
 
 
 if __name__ == '__main__':
@@ -236,13 +245,3 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-"""if k == 1:
-    unique_rows = excel_data1_df.groupby(columns).size().reset_index()
-    print("\nУникальные строки:")
-    print(unique_rows)"""
-
-excel_data_df.to_excel('output2.xlsx', index=False)
