@@ -1,1 +1,1 @@
-# labs_of_algoritms
+# Labs of algoritms
